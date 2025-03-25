@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 #import plotly.express as px
 #import matplotlib.pyplot as plt
-import seaborn as sns
+#import seaborn as sns
 from pandas.api.types import is_numeric_dtype
 
 # Configuración inicial
