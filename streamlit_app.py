@@ -129,17 +129,20 @@ if uploaded_file is not None:
                 st.pyplot(fig)
         
     # Exportar informe
-    # Inicializar el estado del botón en el sidebar
-    if 'show_resume' not in st.session_state:
-        st.session_state.show_resume = False
+    # Inicializar el estado del botón en el sidebar para controlar la visibilidad
+    if 'mostrar_resumen' not in st.session_state:
+        st.session_state.mostrar_resumen = False
     
-    # Botón con nombre dinámico
-    button_text = "**Ocultar Resumen**" if st.session_state.show_resume else "**Resumen Dataset**"
-    if st.sidebar.button(button_text):
-        st.session_state.show_resume = not st.session_state.show_resume  # Toggle estado
+    # Definir el texto del botón según el estado actual
+    texto_boton = "**Ocultar Resumen**" if st.session_state.mostrar_resumen else "**Resumen Dataset**"
     
-    # Mostrar información solo si el estado es True
-    if st.session_state.show_resume:
+    # Crear el botón con texto dinámico
+    if st.sidebar.button(texto_boton):
+        # Invertir el estado al hacer clic
+        st.session_state.mostrar_resumen = not st.session_state.mostrar_resumen
+    
+    # Mostrar información solo cuando el estado es True
+    if st.session_state.mostrar_resumen:
         st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
         st.sidebar.write(f"Número de filas: **{len(df)}**")
         st.sidebar.write(f"Número de columnas: **{len(df.columns)}**")
