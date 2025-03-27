@@ -135,8 +135,6 @@ if uploaded_file is not None:
         st.sidebar.write(f"Dataset: {uploaded_file.name}")
         st.sidebar.write(f"Número de filas: {len(df)}")
         st.sidebar.write(f"Número de columnas: {len(df.columns)}")
-        st.sidebar.download_button("Descargar datos procesados", 
-                                 data=df.to_csv(index=False).encode('utf-8'),
-                                 file_name='processed_data.csv')
+
 else:
     st.info("Por favor, sube un dataset para comenzar")
