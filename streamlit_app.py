@@ -82,12 +82,28 @@ if uploaded_file is not None:
             col1, col2 = st.columns(2)
             x_col = col1.selectbox("Variable X", df.columns)
             y_col = col2.selectbox("Variable Y", df.columns)
+            
             # Selector de colores primarios
             color_options = ["Ninguna", "Rojo", "Verde", "Azul", "Amarillo", "Morado"]
             color_col = st.selectbox("Color de los puntos", color_options)
+            
+            # Validación de columnas numéricas
+            if not is_numeric_dtype(df[x_col]):
+                st.warning(f"La variable X '{x_col}' no es numérica")
+            if not is_numeric_dtype(df[y_col]):
+                st.warning(f"La variable Y '{y_col}' no es numérica")
+                
         elif plot_type == "Bar Plot":
-            cat_col = st.selectbox("Variable Categórica", df.select_dtypes(include=['object']).columns)
-            num_col = st.selectbox("Variable Numérica", df.select_dtypes(include=np.number).columns)
+            # Validar existencia de columnas categóricas y numéricas
+            cat_cols_available = list(df.select_dtypes(include=['object']).columns)
+            num_cols_available = list(df.select_dtypes(include=np.number).columns)
+            
+            if not cat_cols_available or not num_cols_available:
+                st.warning("El dataset no contiene columnas categóricas y/o numéricas necesarias")
+            else:
+                cat_col = st.selectbox("Variable Categórica", cat_cols_available)
+                num_col = st.selectbox("Variable Numérica", num_cols_available)
+                
         elif plot_type == "Heatmap":
             numeric_cols = df.select_dtypes(include=[np.number]).columns
         elif plot_type == "Pairplot":
@@ -102,35 +118,38 @@ if uploaded_file is not None:
                 st.warning("La variable seleccionada no es numérica")
         
         elif plot_type == "Scatter Plot":
-            # Lógica de color
-            color_map = {
-                "Rojo": "red",
-                "Verde": "green",
-                "Azul": "blue",
-                "Amarillo": "yellow",
-                "Morado": "purple"
-            }
-            
-            if color_col == "Ninguna":
-                fig = px.scatter(df, x=x_col, y=y_col)
+            # Validar columnas numéricas
+            if not is_numeric_dtype(df[x_col]) or not is_numeric_dtype(df[y_col]):
+                st.warning("Ambas variables deben ser numéricas")
             else:
-                selected_color = color_map[color_col]
-                fig = px.scatter(
-                    df,
-                    x=x_col,
-                    y=y_col,
-                    color_discrete_sequence=[selected_color]
-                )
-            st.plotly_chart(fig, use_container_width=True)
+                # Configurar color
+                color_map = {
+                    "Rojo": "#FF0000",
+                    "Verde": "#00FF00",
+                    "Azul": "#0000FF",
+                    "Amarillo": "#FFFF00",
+                    "Morado": "#800080"
+                }
+                
+                if color_col == "Ninguna":
+                    fig = px.scatter(df, x=x_col, y=y_col)
+                else:
+                    selected_color = color_map[color_col]
+                    fig = px.scatter(df, x=x_col, y=y_col)
+                    fig.update_traces(marker=dict(color=selected_color))
+                    
+                st.plotly_chart(fig, use_container_width=True)
         
         elif plot_type == "Box Plot":
             fig = px.box(df, y=selected_col)
             st.plotly_chart(fig, use_container_width=True)
         
         elif plot_type == "Bar Plot":
-            # Validación de selección de columnas
-            if not cat_col or not num_col:
-                st.warning("Seleccione ambas variables para generar el gráfico")
+            # Validación doble
+            if 'cat_col' not in locals() or 'num_col' not in locals():
+                st.warning("Seleccione variables válidas")
+            elif cat_col not in df.columns or num_col not in df.columns:
+                st.warning("Las variables seleccionadas no existen en el dataset")
             else:
                 counts = df.groupby(cat_col)[num_col].mean().reset_index()
                 fig = px.bar(counts, x=cat_col, y=num_col)
