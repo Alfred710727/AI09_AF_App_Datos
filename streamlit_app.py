@@ -84,7 +84,7 @@ if uploaded_file is not None:
             y_col = col2.selectbox("Variable Y", df.columns)
             
             # Selector de colores primarios
-            color_options = ["Ninguna", "Rojo", "Verde", "Azul", "Amarillo", "Morado"]
+            color_options = ["Rojo", "Verde", "Amarillo", "Morado"]
             color_col = st.selectbox("Color de los puntos", color_options)
             
             # Validación de columnas numéricas
@@ -126,12 +126,11 @@ if uploaded_file is not None:
                 color_map = {
                     "Rojo": "#FF0000",
                     "Verde": "#00FF00",
-                    "Azul": "#0000FF",
                     "Amarillo": "#FFFF00",
                     "Morado": "#800080"
                 }
                 
-                if color_col == "Ninguna":
+                if color_col == "Azul":
                     fig = px.scatter(df, x=x_col, y=y_col)
                 else:
                     selected_color = color_map[color_col]
