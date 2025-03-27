@@ -129,10 +129,10 @@ if uploaded_file is not None:
                 st.pyplot(fig)
         
     # Exportar informe
-    if st.sidebar.button("## Resumen Dataset"):
-        st.sidebar.write(f"Dataset: {uploaded_file.name}")
-        st.sidebar.write(f"Número de filas: {len(df)}")
-        st.sidebar.write(f"Número de columnas: {len(df.columns)}")
+    if st.sidebar.button("**Resumen Dataset**"):
+        st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
+        st.sidebar.write(f"Número de filas: **{len(df)}**")
+        st.sidebar.write(f"Número de columnas: **{len(df.columns)}**")
 
 else:
     st.info("Por favor, sube un dataset para comenzar")
