@@ -67,10 +67,13 @@ if uploaded_file is not None:
         
     # Sección de Visualización
     st.sidebar.header("Visualización Interactiva")
-    plot_type = st.sidebar.selectbox("Tipo de Gráfico", 
-                                    ["Histograma", "Scatter Plot", 
-                                     "Box Plot", "Bar Plot", 
-                                     "Heatmap", "Pairplot"])
+    
+    # Filtrar opciones de gráfico según estado de EDA
+    available_plots = ["Histograma", "Scatter Plot", "Box Plot", "Bar Plot", "Pairplot"]
+    if not show_eda:
+        available_plots.append("Heatmap")
+    
+    plot_type = st.sidebar.selectbox("Tipo de Gráfico", available_plots)
     
     if plot_type:
         st.header(f"{plot_type} Interactivo")
@@ -106,6 +109,7 @@ if uploaded_file is not None:
                 
         elif plot_type == "Heatmap":
             numeric_cols = df.select_dtypes(include=[np.number]).columns
+            
         elif plot_type == "Pairplot":
             cols = st.multiselect("Selecciona variables", df.columns)
         
@@ -154,11 +158,13 @@ if uploaded_file is not None:
                 fig = px.bar(counts, x=cat_col, y=num_col)
                 st.plotly_chart(fig, use_container_width=True)
         
-        elif plot_type == "Heatmap":
+        elif plot_type == "Heatmap" and not show_eda:
             if len(numeric_cols) > 1:
                 corr_matrix = df[numeric_cols].corr()
                 fig = px.imshow(corr_matrix, text_auto=True)
                 st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("No hay suficientes columnas numéricas para generar el heatmap")
         
         elif plot_type == "Pairplot":
             if cols:
