@@ -82,8 +82,9 @@ if uploaded_file is not None:
             col1, col2 = st.columns(2)
             x_col = col1.selectbox("Variable X", df.columns)
             y_col = col2.selectbox("Variable Y", df.columns)
-            color_col = st.selectbox("Color por variable categórica", 
-                                    ["Ninguna"] + list(df.select_dtypes(include=['object']).columns))
+            # Selector de colores primarios
+            color_options = ["Ninguna", "Rojo", "Verde", "Azul", "Amarillo", "Morado"]
+            color_col = st.selectbox("Color de los puntos", color_options)
         elif plot_type == "Bar Plot":
             cat_col = st.selectbox("Variable Categórica", df.select_dtypes(include=['object']).columns)
             num_col = st.selectbox("Variable Numérica", df.select_dtypes(include=np.number).columns)
@@ -101,10 +102,25 @@ if uploaded_file is not None:
                 st.warning("La variable seleccionada no es numérica")
         
         elif plot_type == "Scatter Plot":
+            # Lógica de color
+            color_map = {
+                "Rojo": "red",
+                "Verde": "green",
+                "Azul": "blue",
+                "Amarillo": "yellow",
+                "Morado": "purple"
+            }
+            
             if color_col == "Ninguna":
                 fig = px.scatter(df, x=x_col, y=y_col)
             else:
-                fig = px.scatter(df, x=x_col, y=y_col, color=color_col)
+                selected_color = color_map[color_col]
+                fig = px.scatter(
+                    df,
+                    x=x_col,
+                    y=y_col,
+                    color_discrete_sequence=[selected_color]
+                )
             st.plotly_chart(fig, use_container_width=True)
         
         elif plot_type == "Box Plot":
@@ -112,9 +128,13 @@ if uploaded_file is not None:
             st.plotly_chart(fig, use_container_width=True)
         
         elif plot_type == "Bar Plot":
-            counts = df.groupby(cat_col)[num_col].mean().reset_index()
-            fig = px.bar(counts, x=cat_col, y=num_col)
-            st.plotly_chart(fig, use_container_width=True)
+            # Validación de selección de columnas
+            if not cat_col or not num_col:
+                st.warning("Seleccione ambas variables para generar el gráfico")
+            else:
+                counts = df.groupby(cat_col)[num_col].mean().reset_index()
+                fig = px.bar(counts, x=cat_col, y=num_col)
+                st.plotly_chart(fig, use_container_width=True)
         
         elif plot_type == "Heatmap":
             if len(numeric_cols) > 1:
@@ -129,19 +149,14 @@ if uploaded_file is not None:
                 st.pyplot(fig)
         
     # Exportar informe
-    # Inicializar el estado del botón en el sidebar para controlar la visibilidad
     if 'mostrar_resumen' not in st.session_state:
         st.session_state.mostrar_resumen = False
     
-    # Definir el texto del botón según el estado actual
     texto_boton = "**Ocultar Resumen**" if st.session_state.mostrar_resumen else "**Resumen Dataset**"
     
-    # Crear el botón con texto dinámico
     if st.sidebar.button(texto_boton):
-        # Invertir el estado al hacer clic
         st.session_state.mostrar_resumen = not st.session_state.mostrar_resumen
     
-    # Mostrar información solo cuando el estado es True
     if st.session_state.mostrar_resumen:
         st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
         st.sidebar.write(f"Número de filas: **{len(df)}**")
