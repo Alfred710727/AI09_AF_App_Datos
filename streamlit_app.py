@@ -129,9 +129,9 @@ if uploaded_file is not None:
                 st.pyplot(fig)
         
     # Exportar informe
-    st.sidebar.header("Exportar Resultados")
-    if st.sidebar.button("Generar Reporte"):
-        st.sidebar.markdown("### Resumen del Análisis")
+    # st.sidebar.header("Resumen")
+    if st.sidebar.button("Resumen Dataset"):
+        # st.sidebar.markdown("### Resumen del Análisis")
         st.sidebar.write(f"Dataset: {uploaded_file.name}")
         st.sidebar.write(f"Número de filas: {len(df)}")
         st.sidebar.write(f"Número de columnas: {len(df.columns)}")
