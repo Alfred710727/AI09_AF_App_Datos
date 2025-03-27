@@ -134,7 +134,7 @@ if uploaded_file is not None:
         st.session_state.show_resume = False
     
     # Botón con nombre dinámico
-    button_text = "Ocultar Dataset" if st.session_state.show_resume else "Resumen Dataset"
+    button_text = "**Ocultar Resumen**" if st.session_state.show_resume else "**Resumen Dataset**"
     if st.sidebar.button(button_text):
         st.session_state.show_resume = not st.session_state.show_resume  # Toggle estado
     
