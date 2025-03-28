@@ -15,7 +15,7 @@ st.set_page_config(
 
 # Inyección de CSS mejorado
 st.markdown(
-    """
+    # """
     <style>
     .main {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -45,7 +45,7 @@ st.markdown(
         padding-top: 1rem;
     }
     </style>
-    """,
+    # """,
     unsafe_allow_html=True
 )
 
