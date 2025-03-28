@@ -38,13 +38,13 @@ def show_readme():
 def hide_readme():
     st.session_state.show_readme = False
 
-# Barra lateral
-st.sidebar.title("Carga de Datos")
-uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'])
-
 # Botón README siempre visible
 with st.sidebar:
     st.button("README", on_click=show_readme)
+    
+# Barra lateral
+st.sidebar.title("Carga de Datos")
+uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'])
 
 if not st.session_state.show_readme:
     if uploaded_file is not None:
