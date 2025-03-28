@@ -18,6 +18,11 @@ st.markdown(
     """
     <style>
     .main {
+        background-image: url('images.jpeg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         padding: 2rem;
         border-radius: 15px;
