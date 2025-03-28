@@ -13,6 +13,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Inyección de CSS para fondo
+st.markdown(
+    """
+    <style
+    .main {
+        background-image: url('images.jpeg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Carga de datos
 @st.cache_data
 def load_data(file):
