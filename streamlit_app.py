@@ -44,13 +44,7 @@ with st.sidebar:
     
 # Barra lateral
 st.sidebar.title("Carga de Datos")
-uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'], button_text="Cargar Dataset")
-# uploaded_file = st.sidebar.file_uploader(
-#     "Sube tu dataset", 
-#     type=['csv', 'xls', 'xlsx', 'json'],
-#     text="Arrastrar y Dejar el Dataset Aquí",  # Texto del área de drop
-#     button_text="Cargar Dataset"  # Texto del botón
-# )
+uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'])
 
 if not st.session_state.show_readme:
     if uploaded_file is not None:
