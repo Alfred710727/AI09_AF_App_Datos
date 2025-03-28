@@ -44,7 +44,7 @@ with st.sidebar:
     
 # Barra lateral
 st.sidebar.title("Carga de Datos")
-uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'])
+uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'], button_text="Cargar Dataset")
 # uploaded_file = st.sidebar.file_uploader(
 #     "Sube tu dataset", 
 #     type=['csv', 'xls', 'xlsx', 'json'],
