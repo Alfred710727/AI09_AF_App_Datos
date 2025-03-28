@@ -4,10 +4,7 @@ import numpy as np
 import plotly.express as px
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pandas.api.types import is_numeric_dtype, is_categorical_dtype
-from scipy import stats
-import io
-import statsmodels.api as sm
+from pandas.api.types import is_numeric_dtype
 
 # Configuración inicial
 st.set_page_config(
@@ -16,13 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inicializar session state
-if 'original_df' not in st.session_state:
-    st.session_state.original_df = None
-    st.session_state.filtered_df = None
-    st.session_state.filters = {}
-
-# Funciones auxiliares
+# Carga de datos
 @st.cache_data
 def load_data(file):
     if file.name.endswith('.csv'):
@@ -35,104 +26,165 @@ def load_data(file):
         st.error("Formato no soportado")
         return None
 
-def apply_filters(df):
-    filtered_df = df.copy()
-    
-    # Filtrado categórico
-    for col in filtered_df.select_dtypes(include=['object', 'category']).columns:
-        if col in st.session_state.filters:
-            if len(st.session_state.filters[col]) > 0:
-                filtered_df = filtered_df[filtered_df[col].isin(st.session_state.filters[col])]
-    
-    # Filtrado numérico
-    for col in filtered_df.select_dtypes(include=np.number).columns:
-        if f"{col}_min" in st.session_state.filters and f"{col}_max" in st.session_state.filters:
-            current_min = st.session_state.filters[f"{col}_min"]
-            current_max = st.session_state.filters[f"{col}_max"]
-            filtered_df = filtered_df[(filtered_df[col] >= current_min) & (filtered_df[col] <= current_max)]
-    
-    return filtered_df
-
-# Carga de datos
 st.sidebar.title("Carga de Datos")
 uploaded_file = st.sidebar.file_uploader("Sube tu dataset", type=['csv', 'xls', 'xlsx', 'json'])
 
 if uploaded_file is not None:
-    # Cargar datos originales
-    if st.session_state.original_df is None:
-        st.session_state.original_df = load_data(uploaded_file)
-        st.session_state.filtered_df = st.session_state.original_df.copy()
-        
-        # Inicializar filtros
-        for col in st.session_state.original_df.select_dtypes(include=['object', 'category']).columns:
-            st.session_state.filters[col] = st.session_state.original_df[col].unique().tolist()
-        
-        for col in st.session_state.original_df.select_dtypes(include=np.number).columns:
-            st.session_state.filters[f"{col}_min"] = float(st.session_state.original_df[col].min())
-            st.session_state.filters[f"{col}_max"] = float(st.session_state.original_df[col].max())
+    df = load_data(uploaded_file)
 
-    # Mostrar estadísticas persistentes
-    with st.sidebar.expander("Resumen del Dataset", expanded=True):
-        st.write(f"Registros originales: {len(st.session_state.original_df)}")
-        st.write(f"Registros filtrados: {len(st.session_state.filtered_df)}")
-        st.write(f"Columnas: {len(st.session_state.original_df.columns)}")
-        st.write("Tipos de datos:")
-        st.write(st.session_state.original_df.dtypes.astype(str))
+    # Sección de Análisis Exploratorio
+    st.sidebar.header("Análisis Exploratorio")
+    show_eda = st.sidebar.checkbox("Mostrar Análisis Exploratorio")
 
-    # Sección de Filtrado
-    with st.sidebar.expander("Filtrado de Datos", expanded=False):
-        # Filtrado categórico
-        cat_cols = st.session_state.original_df.select_dtypes(include=['object', 'category']).columns
-        for col in cat_cols:
-            options = st.session_state.original_df[col].unique().tolist()
-            selected = st.multiselect(
-                f"Filtrar por {col}",
-                options=options,
-                default=st.session_state.filters.get(col, options),
-                key=f"filter_{col}"
-            )
-            st.session_state.filters[col] = selected
-        
-        # Filtrado numérico
-        num_cols = st.session_state.original_df.select_dtypes(include=np.number).columns
-        for col in num_cols:
-            min_val = float(st.session_state.original_df[col].min())
-            max_val = float(st.session_state.original_df[col].max())
-            
-            # Slider con entrada manual
-            col1, col2 = st.columns(2)
-            current_min = col1.number_input(
-                f"Min {col}",
-                min_value=min_val,
-                max_value=max_val,
-                value=st.session_state.filters.get(f"{col}_min", min_val),
-                step=0.1,
-                key=f"num_min_{col}"
-            )
-            current_max = col2.number_input(
-                f"Max {col}",
-                min_value=min_val,
-                max_value=max_val,
-                value=st.session_state.filters.get(f"{col}_max", max_val),
-                step=0.1,
-                key=f"num_max_{col}"
-            )
-            st.session_state.filters[f"{col}_min"] = current_min
-            st.session_state.filters[f"{col}_max"] = current_max
+    if show_eda:
+        st.header("Análisis Exploratorio de Datos")
 
-        # Botones de acción
+        # Resumen estadístico
         col1, col2 = st.columns(2)
-        if col1.button("Aplicar Filtros"):
-            st.session_state.filtered_df = apply_filters(st.session_state.original_df)
-            st.success("Filtros aplicados con éxito!")
-        
-        if col2.button("Reiniciar Filtros"):
-            st.session_state.filters = {}
-            st.session_state.filtered_df = st.session_state.original_df.copy()
-            st.experimental_rerun()
+        with col1:
+            st.subheader("Primeras filas")
+            st.write(df.head())
+        with col2:
+            st.subheader("Tipos de datos")
+            st.write(df.dtypes.astype(str))
 
-    # Resto del código (EDA, estadísticas avanzadas, visualización, etc.)
-    # ... [MANTENER EL CÓDIGO EXISTENTE DE LAS OTRAS SECCIONES] ...
+        # Estadísticas descriptivas
+        st.subheader("Estadísticas Descriptivas")
+        st.write(df.describe(include='all'))
+
+        # Valores faltantes
+        st.subheader("Valores Faltantes")
+        missing_values = df.isnull().sum()
+        st.bar_chart(missing_values[missing_values > 0])
+
+        # Correlación entre variables numéricas
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        if len(numeric_cols) > 1:
+            st.subheader("Matriz de Correlación")
+            corr_matrix = df[numeric_cols].corr()
+            fig = px.imshow(corr_matrix, text_auto=True)
+            st.plotly_chart(fig, use_container_width=True)
+
+    # Sección de Visualización
+    st.sidebar.header("Visualización Interactiva")
+
+    # Filtrar opciones de gráfico según estado de EDA
+    available_plots = ["Histograma", "Scatter Plot", "Box Plot", "Bar Plot", "Pairplot"]
+    if not show_eda:
+        available_plots.append("Heatmap")
+
+    plot_type = st.sidebar.selectbox("Tipo de Gráfico", available_plots)
+
+    if plot_type:
+        st.header(f"{plot_type} Interactivo")
+
+        # Selección de variables
+        if plot_type in ["Histograma", "Box Plot"]:
+            selected_col = st.selectbox("Selecciona una variable", df.columns)
+        elif plot_type == "Scatter Plot":
+            col1, col2 = st.columns(2)
+            x_col = col1.selectbox("Variable X", df.columns)
+            y_col = col2.selectbox("Variable Y", df.columns)
+
+            # Selector de colores primarios
+            color_options = ["Azul", "Rojo", "Verde", "Amarillo", "Morado"]
+            color_col = st.selectbox("Color de los puntos", color_options)
+
+            # Validación de columnas numéricas
+            if not is_numeric_dtype(df[x_col]):
+                st.warning(f"La variable X '{x_col}' no es numérica")
+            if not is_numeric_dtype(df[y_col]):
+                st.warning(f"La variable Y '{y_col}' no es numérica")
+
+        elif plot_type == "Bar Plot":
+            # Validar existencia de columnas categóricas y numéricas
+            cat_cols_available = list(df.select_dtypes(include=['object']).columns)
+            num_cols_available = list(df.select_dtypes(include=np.number).columns)
+
+            if not cat_cols_available or not num_cols_available:
+                st.warning("El dataset no contiene columnas categóricas y/o numéricas necesarias")
+            else:
+                cat_col = st.selectbox("Variable Categórica", cat_cols_available)
+                num_col = st.selectbox("Variable Numérica", num_cols_available)
+
+        elif plot_type == "Heatmap":
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+
+        elif plot_type == "Pairplot":
+            cols = st.multiselect("Selecciona variables", df.columns)
+
+        # Generación de gráficos
+        if plot_type == "Histograma":
+            if is_numeric_dtype(df[selected_col]):
+                fig = px.histogram(df, x=selected_col, marginal="box", nbins=30)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("La variable seleccionada no es numérica")
+
+        elif plot_type == "Scatter Plot":
+            # Validar columnas numéricas
+            if not is_numeric_dtype(df[x_col]) or not is_numeric_dtype(df[y_col]):
+                st.warning("Ambas variables deben ser numéricas")
+            else:
+                # Configurar color
+                color_map = {
+                    "Rojo": "#FF0000",
+                    "Verde": "#00FF00",
+                    "Amarillo": "#FFFF00",
+                    "Morado": "#800080"
+                }
+
+                if color_col == "Azul":
+                    fig = px.scatter(df, x=x_col, y=y_col)
+                else:
+                    selected_color = color_map[color_col]
+                    fig = px.scatter(df, x=x_col, y=y_col)
+                    fig.update_traces(marker=dict(color=selected_color))
+
+                st.plotly_chart(fig, use_container_width=True)
+
+        elif plot_type == "Box Plot":
+            fig = px.box(df, y=selected_col)
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif plot_type == "Bar Plot":
+            # Validación doble
+            if 'cat_col' not in locals() or 'num_col' not in locals():
+                st.warning("Seleccione variables válidas")
+            elif cat_col not in df.columns or num_col not in df.columns:
+                st.warning("Las variables seleccionadas no existen en el dataset")
+            else:
+                counts = df.groupby(cat_col)[num_col].mean().reset_index()
+                fig = px.bar(counts, x=cat_col, y=num_col)
+                st.plotly_chart(fig, use_container_width=True)
+
+        elif plot_type == "Heatmap" and not show_eda:
+            if len(numeric_cols) > 1:
+                corr_matrix = df[numeric_cols].corr()
+                fig = px.imshow(corr_matrix, text_auto=True)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.warning("No hay suficientes columnas numéricas para generar el heatmap")
+
+        elif plot_type == "Pairplot":
+            if cols:
+                pair_df = df[cols]
+                fig = sns.pairplot(pair_df)
+                st.pyplot(fig)
+
+    # Exportar informe
+    if 'mostrar_resumen' not in st.session_state:
+        st.session_state.mostrar_resumen = False
+
+    texto_boton = "**Ocultar Resumen**" if st.session_state.mostrar_resumen else "**Resumen Dataset**"
+
+    if st.sidebar.button(texto_boton):
+        st.session_state.mostrar_resumen = not st.session_state.mostrar_resumen
+
+    if st.session_state.mostrar_resumen:
+        st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
+        st.sidebar.write(f"Número de filas: **{len(df)}**")
+        st.sidebar.write(f"Número de columnas: **{len(df.columns)}**")
 
 else:
     st.info("Por favor, sube un dataset para comenzar")
