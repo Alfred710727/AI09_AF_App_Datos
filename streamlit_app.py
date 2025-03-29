@@ -2,14 +2,15 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import matplotlib.pyplot as plt
 import seaborn as sns
 from pandas.api.types import is_numeric_dtype
 
-# Configuración inicial con tema oscuro
+# Configuración inicial
 st.set_page_config(
-    page_title="Sistema de Soporte a Decisiones",
+    page_title="Aplicación Dinámica de Soporte a Decisiones",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
     page_icon="📊"
 )
 
@@ -22,18 +23,6 @@ st.markdown(
         padding: 2rem;
         border-radius: 15px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .stButton button {
-        background-color: #4CAF50;
-        border-radius: 8px;
-        color: white;
-        font-weight: bold;
-        padding: 0.8rem 1.5rem;
-        transition: all 0.3s ease;
-    }
-    .stButton button:hover {
-        background-color: #45a049;
-        transform: translateY(-2px);
     }
     .sidebar .sidebar-content {
         background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -49,7 +38,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Carga de datos con mensaje de carga
+# Carga de datos
 @st.cache_data(show_spinner="Cargando datos... 🔄")
 def load_data(file):
     if file.name.endswith('.csv'):
@@ -58,163 +47,214 @@ def load_data(file):
         return pd.read_excel(file)
     elif file.name.endswith('.json'):
         return pd.read_json(file)
-    st.error("Formato no soportado ❌")
-    return None
+    else:
+        st.error("Formato no soportado ❌")
+        return None
 
-# Estado de la aplicación
+# Estado para controlar la vista README
 if 'show_readme' not in st.session_state:
     st.session_state.show_readme = False
-if 'mostrar_resumen' not in st.session_state:
-    st.session_state.mostrar_resumen = False
 
-# Sidebar mejorada
+# Función para mostrar el README
+def show_readme():
+    st.session_state.show_readme = True
+
+# Función para ocultar el README
+def hide_readme():
+    st.session_state.show_readme = False
+
+# Botón README siempre visible
 with st.sidebar:
-    st.title("📊 Carga de Datos")
-    uploaded_file = st.file_uploader(
-        "Sube tu dataset",
-        type=['csv', 'xls', 'xlsx', 'json'],
-        help="Soporta CSV, Excel y JSON"
-    )
-    
+    #st.button("README", on_click=show_readme)
     st.button(
         "README 📖",
         on_click=lambda: setattr(st.session_state, 'show_readme', True),
         help="Ver guía de uso"
     )
 
-    if uploaded_file:
-        with st.expander("Configuración Avanzada ⚙️"):
-            st.checkbox("Modo Experto", help="Habilita opciones avanzadas")
-            st.color_picker("Color Primario", "#4CAF50", help="Color principal de la app")
+# Barra lateral
+st.sidebar.title("📊 Carga de Datos")
+uploaded_file = st.sidebar.file_uploader(
+    "Sube tu dataset",
+    type=['csv', 'xls', 'xlsx', 'json'],
+    help="Soporta CSV, Excel y JSON"
+    )
 
-# Contenido principal
-if st.session_state.show_readme:
-    st.header("📚 Guía de Uso")
+if not st.session_state.show_readme:
+    if uploaded_file is not None:
+        df = load_data(uploaded_file)
+
+        # Sección de Análisis Exploratorio
+        st.sidebar.header("🔍 Análisis Exploratorio")
+        show_eda = st.sidebar.checkbox("Mostrar Análisis Exploratorio")
+
+        if show_eda:
+            st.header("Análisis Exploratorio de Datos")
+
+            # Resumen estadístico
+            col1, col2 = st.columns(2)
+            with col1:
+                st.subheader("Primeras filas")
+                st.write(df.head())
+            with col2:
+                st.subheader("Tipos de datos")
+                st.write(df.dtypes.astype(str))
+
+            # Estadísticas descriptivas
+            st.subheader("Estadísticas Descriptivas")
+            st.write(df.describe(include='all'))
+
+            # Valores faltantes
+            st.subheader("Valores Faltantes")
+            missing_values = df.isnull().sum()
+            st.bar_chart(missing_values[missing_values > 0])
+
+            # Correlación entre variables numéricas
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            if len(numeric_cols) > 1:
+                st.subheader("Matriz de Correlación")
+                corr_matrix = df[numeric_cols].corr()
+                fig = px.imshow(corr_matrix, text_auto=True)
+                st.plotly_chart(fig, use_container_width=True)
+
+        # Sección de Visualización
+        st.sidebar.header("📈 Visualización Interactiva")
+
+        # Filtrar opciones de gráfico según estado de EDA
+        available_plots = ["Histograma", "Scatter Plot", "Box Plot", "Bar Plot", "Pairplot"]
+        if not show_eda:
+            available_plots.append("Heatmap")
+
+        plot_type = st.sidebar.selectbox("Tipo de Gráfico", available_plots)
+
+        if plot_type:
+            st.header(f"{plot_type} Interactivo")
+
+            # Selección de variables
+            if plot_type in ["Histograma", "Box Plot"]:
+                selected_col = st.selectbox("Selecciona una variable", df.columns)
+            elif plot_type == "Scatter Plot":
+                col1, col2 = st.columns(2)
+                x_col = col1.selectbox("Variable X", df.columns)
+                y_col = col2.selectbox("Variable Y", df.columns)
+
+                # Selector de colores primarios
+                color_options = ["Azul", "Rojo", "Verde", "Amarillo", "Morado"]
+                color_col = st.selectbox("Color de los puntos", color_options)
+
+                # Validación de columnas numéricas
+                if not is_numeric_dtype(df[x_col]):
+                    st.warning(f"La variable X '{x_col}' no es numérica")
+                if not is_numeric_dtype(df[y_col]):
+                    st.warning(f"La variable Y '{y_col}' no es numérica")
+
+            elif plot_type == "Bar Plot":
+                # Validar existencia de columnas categóricas y numéricas
+                cat_cols_available = list(df.select_dtypes(include=['object']).columns)
+                num_cols_available = list(df.select_dtypes(include=np.number).columns)
+
+                if not cat_cols_available or not num_cols_available:
+                    st.warning("El dataset no contiene columnas categóricas y/o numéricas necesarias")
+                else:
+                    cat_col = st.selectbox("Variable Categórica", cat_cols_available)
+                    num_col = st.selectbox("Variable Numérica", num_cols_available)
+
+            elif plot_type == "Heatmap":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns
+
+            elif plot_type == "Pairplot":
+                cols = st.multiselect("Selecciona variables", df.columns)
+
+            # Generación de gráficos
+            if plot_type == "Histograma":
+                if is_numeric_dtype(df[selected_col]):
+                    fig = px.histogram(df, x=selected_col, marginal="box", nbins=30)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("La variable seleccionada no es numérica")
+
+            elif plot_type == "Scatter Plot":
+                # Validar columnas numéricas
+                if not is_numeric_dtype(df[x_col]) or not is_numeric_dtype(df[y_col]):
+                    st.warning("Ambas variables deben ser numéricas")
+                else:
+                    # Configurar color
+                    color_map = {
+                        "Rojo": "#FF0000",
+                        "Verde": "#00FF00",
+                        "Amarillo": "#FFFF00",
+                        "Morado": "#800080"
+                    }
+
+                    if color_col == "Azul":
+                        fig = px.scatter(df, x=x_col, y=y_col)
+                    else:
+                        selected_color = color_map[color_col]
+                        fig = px.scatter(df, x=x_col, y=y_col)
+                        fig.update_traces(marker=dict(color=selected_color))
+
+                    st.plotly_chart(fig, use_container_width=True)
+
+            elif plot_type == "Box Plot":
+                fig = px.box(df, y=selected_col)
+                st.plotly_chart(fig, use_container_width=True)
+
+            elif plot_type == "Bar Plot":
+                # Validación doble
+                if 'cat_col' not in locals() or 'num_col' not in locals():
+                    st.warning("Seleccione variables válidas")
+                elif cat_col not in df.columns or num_col not in df.columns:
+                    st.warning("Las variables seleccionadas no existen en el dataset")
+                else:
+                    counts = df.groupby(cat_col)[num_col].mean().reset_index()
+                    fig = px.bar(counts, x=cat_col, y=num_col)
+                    st.plotly_chart(fig, use_container_width=True)
+
+            elif plot_type == "Heatmap" and not show_eda:
+                if len(numeric_cols) > 1:
+                    corr_matrix = df[numeric_cols].corr()
+                    fig = px.imshow(corr_matrix, text_auto=True)
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.warning("No hay suficientes columnas numéricas para generar el heatmap")
+
+            elif plot_type == "Pairplot":
+                if cols:
+                    pair_df = df[cols]
+                    fig = sns.pairplot(pair_df)
+                    st.pyplot(fig)
+
+        # Exportar informe
+        if 'mostrar_resumen' not in st.session_state:
+            st.session_state.mostrar_resumen = False
+
+        texto_boton = "**Ocultar Resumen**" if st.session_state.mostrar_resumen else "**Resumen Dataset**"
+
+        if st.sidebar.button(texto_boton):
+            st.session_state.mostrar_resumen = not st.session_state.mostrar_resumen
+
+        if st.session_state.mostrar_resumen:
+            st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
+            st.sidebar.write(f"Número de filas: **{len(df)}**")
+            st.sidebar.write(f"Número de columnas: **{len(df.columns)}**")
+
+    else:
+        st.info("📁 Por favor, sube un dataset para comenzar")
+else:
+    # Contenido del README
+    st.header("📚 Guía de Uso de la Aplicación")
     st.markdown("""
     **Pasos para utilizar:**
-    1. 📁 Carga tu dataset usando el uploader en la sidebar
-    2. 📊 Activa el análisis exploratorio para ver estadísticas
-    3. 📈 Selecciona tipo de gráfico en la sección de visualización
+    1. 📁 Carga tu dataset mediante el botón "Sube tu dataset" en la barra lateral
+    2. 📊 Activa el análisis exploratorio para ver estadísticas básicas y visualizaciones
+    3. 📈 Selecciona el tipo de gráfico deseado en la sección de Visualización Interactiva
     4. 🎨 Personaliza los parámetros del gráfico
-    5. 📉 Analiza los resultados generados
-    
+    5. 📉 Visualiza y analiza los resultados generados
+
     **Tips:**
     - Usa el modo experto para opciones avanzadas
     - Los gráficos se pueden descargar con clic derecho
     """)
+
+    # Botón para salir del README
     st.button("Salir", on_click=lambda: setattr(st.session_state, 'show_readme', False))
-
-elif uploaded_file:
-    df = load_data(uploaded_file)
-    
-    # Barra de herramientas superior
-    col1, col2, col3 = st.columns([1,4,1])
-    with col1:
-        st.button("🔄 Reset", help="Reiniciar aplicación")
-    with col2:
-        st.progress(100 if 'df' in locals() else 0)
-    with col3:
-        st.download_button(
-            "💾 Descargar Dataset",
-            data=df.to_csv(index=False),
-            file_name="processed_data.csv",
-            mime="text/csv"
-        )
-
-    # Sección de Análisis Exploratorio mejorada
-    with st.expander("🔍 Análisis Exploratorio", expanded=True):
-        tab1, tab2, tab3 = st.tabs(["Datos", "Estadísticas", "Visualización"])
-        
-        with tab1:
-            st.subheader("Datos Iniciales")
-            st.dataframe(df.head(5).style.highlight_max(axis=0))
-            
-        with tab2:
-            st.subheader("Resumen Estadístico")
-            st.dataframe(df.describe(include='all').T.style.format("{:.2f}"))
-            
-        with tab3:
-            st.subheader("Distribución de Variables")
-            selected_col = st.selectbox("Selecciona variable", df.columns)
-            if is_numeric_dtype(df[selected_col]):
-                fig = px.histogram(df, x=selected_col, marginal="box")
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.warning("Seleccione una variable numérica")
-
-    # Sección de Visualización Interactiva mejorada
-    st.header("📈 Generador de Visualizaciones")
-    with st.form("visual_config"):
-        plot_type = st.selectbox(
-            "Tipo de Gráfico",
-            ["Histograma", "Scatter Plot", "Box Plot", "Bar Plot", "Pairplot"],
-            help="Selecciona el tipo de visualización"
-        )
-        
-        if plot_type in ["Histograma", "Box Plot"]:
-            selected_col = st.selectbox(
-                "Variable",
-                df.select_dtypes(include=np.number).columns,
-                help="Solo variables numéricas"
-            )
-            
-        elif plot_type == "Scatter Plot":
-            col1, col2 = st.columns(2)
-            x_col = col1.selectbox("Variable X", df.columns)
-            y_col = col2.selectbox("Variable Y", df.columns)
-            color_col = st.color_picker("Color de los puntos", "#2ecc71")
-            size_col = st.slider("Tamaño de puntos", 5, 20, 10)
-            
-        elif plot_type == "Bar Plot":
-            cat_cols = df.select_dtypes(include=['object']).columns
-            num_cols = df.select_dtypes(include=np.number).columns
-            cat_col = st.selectbox("Categórica", cat_cols)
-            num_col = st.selectbox("Numérica", num_cols)
-            
-        elif plot_type == "Pairplot":
-            cols = st.multiselect("Variables", df.columns)
-            
-        submit_button = st.form_submit_button("Generar Gráfico 📊")
-        
-    if submit_button:
-        with st.spinner("Generando visualización..."):
-            if plot_type == "Histograma":
-                fig = px.histogram(df, x=selected_col, nbins=30)
-                st.plotly_chart(fig, use_container_width=True)
-                
-            elif plot_type == "Scatter Plot":
-                if is_numeric_dtype(df[x_col]) and is_numeric_dtype(df[y_col]):
-                    fig = px.scatter(
-                        df,
-                        x=x_col,
-                        y=y_col,
-                        color_discrete_sequence=[color_col],
-                        size=np.repeat(size_col, len(df))
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.error("Las variables X e Y deben ser numéricas")
-                    
-        # Agregar descarga de gráficos
-        if 'fig' in locals():
-            st.download_button(
-                ".Download PNG",
-                data=fig.to_image(format="png"),
-                file_name=f"{plot_type.lower()}.png",
-                mime="image/png"
-            )
-
-    # Resumen mejorado en sidebar
-    with st.sidebar:
-        st.subheader("📋 Resumen Dataset")
-        st.metric("Filas", f"{len(df):,}")
-        st.metric("Columnas", len(df.columns))
-        st.metric("Memoria", f"{df.memory_usage().sum() / 1e6:.2f} MB")
-        
-        with st.expander("Variables"):
-            for col in df.columns:
-                st.text(f"• {col} ({df[col].dtype})")
-
-else:
-    st.info("📁 Por favor sube un dataset para comenzar")
-    st.image("https://via.placeholder.com/600x400?text=Data+Analysis", use_column_width=True)
