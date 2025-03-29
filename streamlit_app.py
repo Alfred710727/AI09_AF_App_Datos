@@ -257,4 +257,5 @@ else:
     """)
 
     # Botón para salir del README
-    st.button("Salir", on_click=lambda: setattr(st.session_state, 'show_readme', False))
+    st.button("🔄 Salir", on_click=lambda: setattr(st.session_state, 'show_readme', False),
+              help="Inicia tu análisis exploratorio")
