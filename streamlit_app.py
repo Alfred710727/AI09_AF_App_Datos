@@ -10,7 +10,7 @@ from pandas.api.types import is_numeric_dtype
 st.set_page_config(
     page_title="Aplicación Dinámica de Soporte a Decisiones",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
     page_icon="📊"
 )
 
