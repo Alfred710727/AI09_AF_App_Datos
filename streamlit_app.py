@@ -224,6 +224,7 @@ if not st.session_state.show_readme:
                     fig = sns.pairplot(pair_df)
                     st.pyplot(fig)
 
+        """
         # Exportar informe
         if 'mostrar_resumen' not in st.session_state:
             st.session_state.mostrar_resumen = False
@@ -237,6 +238,18 @@ if not st.session_state.show_readme:
             st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
             st.sidebar.write(f"Número de filas: **{len(df)}**")
             st.sidebar.write(f"Número de columnas: **{len(df.columns)}**")
+        """
+
+        # Resumen mejorado en sidebar
+        with st.sidebar:
+            st.subheader("📋 Resumen Dataset")
+            st.metric("Filas", f"{len(df):,}")
+            st.metric("Columnas", len(df.columns))
+            st.metric("Memoria", f"{df.memory_usage().sum() / 1e6:.2f} MB")
+    
+            with st.expander("Variables"):
+                for col in df.columns:
+                    st.text(f"• {col} ({df[col].dtype})")
 
     else:
         st.info("📁 Por favor, sube un dataset para comenzar")
