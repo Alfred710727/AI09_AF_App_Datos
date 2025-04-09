@@ -194,12 +194,18 @@ if not st.session_state.show_readme:
 
         # Diccionario con descripciones de gráficos
         PLOT_DESCRIPTIONS = {
-            "📊 Histograma": "Muestra la distribución de una variable numérica mediante barras que representan la frecuencia de los datos en intervalos.",
-            "🔗 Scatter Plot": "Visualiza la relación entre dos variables numéricas mediante puntos en un plano cartesiano.",
-            "📦 Box Plot": "Muestra la distribución estadística de una variable (mediana, cuartiles y valores atípicos).",
-            "📊 Bar Plot": "Compara valores entre categorías mediante barras rectangulares.",
-            "📈 KDE": "Estima la densidad de probabilidad de una variable numérica mediante un suavizado de kernel.",
-            # ... (agregar descripciones para todos los gráficos)
+            "📊 Histograma": "Muestra la distribución de una variable numérica mediante barras que representan frecuencias en intervalos. Ideal para identificar sesgos, curtosis y valores atípicos.",
+            "🔗 Scatter Plot": "Visualiza la relación entre dos variables numéricas mediante puntos en un plano cartesiano. Útil para detectar correlaciones y patrones no lineales.",
+            "📦 Box Plot": "Representa estadísticas descriptivas (mediana, cuartiles y outliers) de una variable. Esencial para comparar distribuciones entre grupos.",
+            "📊 Bar Plot": "Compara magnitudes entre categorías mediante barras. Recomendado para variables categóricas y análisis de frecuencias relativas.",
+            "📈 KDE": "Estima la densidad de probabilidad de una variable numérica mediante suavizado de kernel. Alternativa más precisa que el histograma para distribuciones continuas.",
+            "📊 + 📊 Pairplot": "Muestra relaciones multivariadas mediante una matriz de scatter plots. Ideal para explorar correlaciones en datasets con múltiples variables numéricas.",
+            "🌡️ Heatmap": "Visualiza matrices de datos (como correlaciones) mediante colores. Permite identificar patrones de asociación rápida y eficientemente.",
+            "🎻 Violin Plot": "Combina un box plot con una estimación de densidad kernel. Muestra la distribución de datos en múltiples categorías con mayor detalle que el box plot tradicional.",
+            "⬢ Hexbin": "Agrupa puntos densos en hexágonos para visualizar patrones en grandes datasets. Alternativa al scatter plot cuando hay sobreposición de datos.",
+            "3D 🚀 Scatter": "Representa tres variables numéricas en un espacio tridimensional. Útil para explorar interacciones complejas entre múltiples dimensiones.",
+            "🔄 ParallelGroups": "Visualiza datos multidimensionales mediante ejes paralelos. Permite identificar clusters y patrones en variables numéricas y categóricas simultáneamente.",
+            "🧬 ClusterMap": "Aplica clustering jerárquico a filas y columnas de un dataset. Muestra grupos similares mediante un heatmap con dendrogramas, ideal para análisis de expresión génica o segmentación."
         }
 
         if plot_type:
@@ -454,15 +460,17 @@ else:
     st.header("📚 Guía de Uso de la Aplicación")
     st.markdown("""
     **Pasos para utilizar:**
-    1. 📁 Carga tu dataset mediante el botón "Sube tu dataset" en la barra lateral
-    2. 📊 Activa el análisis exploratorio para ver estadísticas básicas y visualizaciones
+    1. 📁 Carga tu dataset mediante el botón **Browse files** en la sección lateral (Parte Izquierda de la pantalla)
+    2. 📊 Activa ✅ **Análisis Exploratorio** para ver estadísticas básicas y visualizaciones
     3. 📈 Selecciona el tipo de gráfico deseado en la sección de Visualización Interactiva
-    4. 🎨 Personaliza los parámetros del gráfico
-    5. 📉 Visualiza y analiza los resultados generados
+    4. 🔬 Activa ✅ **Habilitar Gráficos Avanzados** para análizar gráficos avanzados en la sección de Visualización Interactiva
+    5. 🎨 Personaliza los parámetros del gráfico como colores, variables y dimensiones
+    6. 📉 Explora, visualiza y analiza los resultados generados con gráficos interactivos y descárgalos en formato PNG/SVG
 
     **Tips:**
-    - Usa el modo experto para opciones avanzadas
+    - Genera análisis estadístico y matriz de correlación con un sólo clic
     - Los gráficos se pueden descargar con clic derecho
+    - Elementos de ayuda (❓) para entender cada gráfico, con lo sólo pasar el mouse por encima.
     """)
 
     # Botón para salir del README
