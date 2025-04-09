@@ -19,7 +19,11 @@ st.markdown(
     """
     <style>
     .main {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background-image: url('./gou_imagen.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), url('./gou_imagen.png');
         padding: 2rem;
         border-radius: 15px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -84,56 +88,72 @@ if not st.session_state.show_readme:
     if uploaded_file is not None:
         df = load_data(uploaded_file)
 
+        # Agrega la imagen en la parte superior
+        col1, col2 = st.columns([3, 1])
+        with col2:
+            st.image("gou_imagen.png", width=200, caption="")
+
         # Sección de Análisis Exploratorio
         st.sidebar.header("🔍 Análisis Exploratorio")
         show_eda = st.sidebar.checkbox("Mostrar Análisis Exploratorio")
 
         if show_eda:
-            st.header("Análisis Exploratorio de Datos")
 
-            # Resumen estadístico
-            col1, col2 = st.columns(2)
-            with col1:
-                st.subheader("Primeras filas")
-                st.write(df.head())
-            with col2:
-                st.subheader("Tipos de datos")
-                st.write(df.dtypes.astype(str))
+            # Sección de Análisis Exploratorio de Datos
+            with st.expander("🔍 Análisis Exploratorio de Datos", expanded=True):
+                tab1, tab2, tab3, tab4 = st.tabs(["Datos", "Estadísticas", "Correlación","Valores Faltantes"])
 
-            # Estadísticas descriptivas
-            st.subheader("Estadísticas Descriptivas")
-            st.write(df.describe(include='all'))
+                with tab1:
+                    st.subheader("🗃️ Datos Iniciales")
+                    st.dataframe(df.head(5).style.highlight_max(axis=0))
 
-            # Valores faltantes
-            st.subheader("Valores Faltantes")
-            missing_values = df.isnull().sum()
-            st.bar_chart(missing_values[missing_values > 0])
+                with tab2:
+                    st.subheader("🏦 Resumen Estadístico - Estadísticas Descriptivas")
+                    # Filtrar columnas numéricas
+                    numeric_cols = df.select_dtypes(include=[np.number]).columns
+                    if not numeric_cols.empty:
+                        # Calcular estadísticas solo para columnas numéricas
+                        stats_df = df[numeric_cols].describe().T
+                        # Aplicar formato solo a columnas numéricas
+                        st.dataframe(stats_df.style.format("{:.2f}"))
+                    else:
+                        st.warning("⚠️ No se encontraron columnas numéricas en el dataset.")
 
-            # Correlación entre variables numéricas
-            numeric_cols = df.select_dtypes(include=[np.number]).columns
-            if len(numeric_cols) > 1:
-                st.subheader("Matriz de Correlación")
-                corr_matrix = df[numeric_cols].corr()
-                fig = px.imshow(corr_matrix, text_auto=True)
-                st.plotly_chart(fig, use_container_width=True)
+                with tab3:
+                    st.subheader("🧩 Correlación entre de Variables Numéricas")
+                    numeric_cols = df.select_dtypes(include=[np.number]).columns
+                    if len(numeric_cols) > 1:
+                        st.subheader("Matriz de Correlación")
+                        corr_matrix = df[numeric_cols].corr()
+                        fig = px.imshow(corr_matrix, text_auto=True)
+                        st.plotly_chart(fig, use_container_width=True)
+
+                with tab4:
+                    st.subheader("Valores Faltantes")
+                    missing_values = df.isnull().sum()
+                    st.bar_chart(missing_values[missing_values > 0])
+
 
         # Sección de Visualización
         st.sidebar.header("📈 Visualización Interactiva")
 
         # Filtrar opciones de gráfico según estado de EDA
-        available_plots = ["Histograma", "Scatter Plot", "Box Plot", "Bar Plot", "Pairplot"]
+        available_plots = ["📊 Histograma", "🔗 Scatter Plot", "📦 Box Plot", "📊 Bar Plot", "📊 + 📊 Pairplot",
+                           "📈 KDE", "🎻 Violin Plot", "⬢ Hexbin",
+                           "3D 🚀 Scatter", "🔄 ParallelGroups", "🧬 ClusterMap"]
         if not show_eda:
-            available_plots.append("Heatmap")
+            available_plots.append("🌡️ Heatmap")
 
         plot_type = st.sidebar.selectbox("Tipo de Gráfico", available_plots)
 
+        
         if plot_type:
             st.header(f"{plot_type} Interactivo")
 
             # Selección de variables
-            if plot_type in ["Histograma", "Box Plot"]:
+            if plot_type in ["📊 Histograma", "📦 Box Plot"]:
                 selected_col = st.selectbox("Selecciona una variable", df.columns)
-            elif plot_type == "Scatter Plot":
+            elif plot_type == "🔗 Scatter Plot":
                 col1, col2 = st.columns(2)
                 x_col = col1.selectbox("Variable X", df.columns)
                 y_col = col2.selectbox("Variable Y", df.columns)
@@ -148,7 +168,7 @@ if not st.session_state.show_readme:
                 if not is_numeric_dtype(df[y_col]):
                     st.warning(f"La variable Y '{y_col}' no es numérica")
 
-            elif plot_type == "Bar Plot":
+            elif plot_type == "📊 Bar Plot":
                 # Validar existencia de columnas categóricas y numéricas
                 cat_cols_available = list(df.select_dtypes(include=['object']).columns)
                 num_cols_available = list(df.select_dtypes(include=np.number).columns)
@@ -159,21 +179,22 @@ if not st.session_state.show_readme:
                     cat_col = st.selectbox("Variable Categórica", cat_cols_available)
                     num_col = st.selectbox("Variable Numérica", num_cols_available)
 
-            elif plot_type == "Heatmap":
+            elif plot_type == "🌡️ Heatmap":
                 numeric_cols = df.select_dtypes(include=[np.number]).columns
 
-            elif plot_type == "Pairplot":
-                cols = st.multiselect("Selecciona variables", df.columns)
+            elif plot_type == "📊 + 📊 Pairplot":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                cols = st.multiselect("Selecciona variables", numeric_cols, placeholder="Seleccionar variables")
 
             # Generación de gráficos
-            if plot_type == "Histograma":
+            if plot_type == "📊 Histograma":
                 if is_numeric_dtype(df[selected_col]):
                     fig = px.histogram(df, x=selected_col, marginal="box", nbins=30)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
                     st.warning("La variable seleccionada no es numérica")
 
-            elif plot_type == "Scatter Plot":
+            elif plot_type == "🔗 Scatter Plot":
                 # Validar columnas numéricas
                 if not is_numeric_dtype(df[x_col]) or not is_numeric_dtype(df[y_col]):
                     st.warning("Ambas variables deben ser numéricas")
@@ -195,11 +216,11 @@ if not st.session_state.show_readme:
 
                     st.plotly_chart(fig, use_container_width=True)
 
-            elif plot_type == "Box Plot":
+            elif plot_type == "📦 Box Plot":
                 fig = px.box(df, y=selected_col)
                 st.plotly_chart(fig, use_container_width=True)
 
-            elif plot_type == "Bar Plot":
+            elif plot_type == "📊 Bar Plot":
                 # Validación doble
                 if 'cat_col' not in locals() or 'num_col' not in locals():
                     st.warning("Seleccione variables válidas")
@@ -210,7 +231,7 @@ if not st.session_state.show_readme:
                     fig = px.bar(counts, x=cat_col, y=num_col)
                     st.plotly_chart(fig, use_container_width=True)
 
-            elif plot_type == "Heatmap" and not show_eda:
+            elif plot_type == "🌡️ Heatmap" and not show_eda:
                 if len(numeric_cols) > 1:
                     corr_matrix = df[numeric_cols].corr()
                     fig = px.imshow(corr_matrix, text_auto=True)
@@ -218,36 +239,144 @@ if not st.session_state.show_readme:
                 else:
                     st.warning("No hay suficientes columnas numéricas para generar el heatmap")
 
-            elif plot_type == "Pairplot":
+            elif plot_type == "📊 + 📊 Pairplot":
                 if cols:
                     pair_df = df[cols]
                     fig = sns.pairplot(pair_df)
                     st.pyplot(fig)
 
-        """
+            # --- Nuevos Gráficos ---
+            if plot_type == "📈 KDE":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                if not numeric_cols:
+                    st.warning("No hay columnas numéricas disponibles")
+                else:
+                    selected_col = st.selectbox("Variable Numérica", numeric_cols)
+                    if selected_col:
+                        fig, ax = plt.subplots()
+                        sns.kdeplot(df[selected_col], fill=True, ax=ax)
+                        st.pyplot(fig)
+                        
+            elif plot_type == "🎻 Violin Plot":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                cat_cols = df.select_dtypes(include=['object']).columns.tolist()
+                if not numeric_cols:
+                    st.warning("No hay columnas numéricas")
+                else:
+                    num_var = st.selectbox("Variable Numérica", numeric_cols)
+                    cat_var = st.selectbox("Variable Categórica (opcional)", ["Ninguna"] + cat_cols)
+                    if cat_var != "Ninguna":
+                        fig, ax = plt.subplots()
+                        sns.violinplot(x=df[cat_var], y=df[num_var], ax=ax)
+                        st.pyplot(fig)
+                        
+            elif plot_type == "⬢ Hexbin":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                if len(numeric_cols) < 2:
+                    st.warning("Se necesitan al menos 2 columnas numéricas")
+                else:
+                    x_col = st.selectbox("Eje X", numeric_cols)
+                    y_col = st.selectbox("Eje Y", numeric_cols)
+                    if x_col and y_col:
+                        fig, ax = plt.subplots()
+                        hb = ax.hexbin(df[x_col], df[y_col], gridsize=20, cmap='viridis')
+                        fig.colorbar(hb, label='Densidad')
+                        st.pyplot(fig)
+                        
+            elif plot_type == "3D 🚀 Scatter":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                if len(numeric_cols) < 3:
+                    st.warning("Se necesitan al menos 3 columnas numéricas")
+                else:
+                    x_col = st.selectbox("Eje X", numeric_cols)
+                    y_col = st.selectbox("Eje Y", numeric_cols)
+                    z_col = st.selectbox("Eje Z", numeric_cols)
+                    if x_col and y_col and z_col:
+                        fig = px.scatter_3d(df, x=x_col, y=y_col, z=z_col)
+                        st.plotly_chart(fig)
+                        
+            elif plot_type == "🔄 ParallelGroups":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                cat_cols = df.select_dtypes(include=['object']).columns.tolist()
+                if not numeric_cols or not cat_cols:
+                    st.warning("Se necesita al menos 1 variable numérica y 1 categórica")
+                else:
+                    class_col = st.selectbox("Variable Clase", cat_cols)
+                    features = st.multiselect("Variables Numéricas", numeric_cols, placeholder="Seleccionar variables")
+                    if features and class_col:
+                        from sklearn.preprocessing import StandardScaler, LabelEncoder
+                        # Escalar variables numéricas
+                        scaled_df = StandardScaler().fit_transform(df[features])
+                        scaled_df = pd.DataFrame(scaled_df, columns=features)
+                        
+                        # Convertir variable categórica a numérica
+                        le = LabelEncoder()
+                        class_codes = le.fit_transform(df[class_col])
+                        
+                        # Agregar codificación al DataFrame escalado
+                        scaled_df[class_col] = class_codes
+                        
+                        # Crear gráfico con codificación de color numérica
+                        fig = px.parallel_coordinates(
+                            scaled_df,
+                            color=class_col,
+                            labels={class_col: "Clase"},
+                            color_continuous_scale=px.colors.sequential.Viridis
+                        )
+                        st.plotly_chart(fig)
+                        
+            elif plot_type == "🧬 ClusterMap":
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                if len(numeric_cols) < 2:
+                    st.warning("Se necesitan al menos 2 columnas numéricas")
+                else:
+                    cluster_vars = st.multiselect("Variables para Clustering", numeric_cols, placeholder="Seleccionar al menos dos variables")
+                    if cluster_vars:
+                        try:
+                            max_rows = 5000
+                            if len(df) > max_rows:
+                                st.warning(
+                                    f"Dataset muy grande ({len(df):,} filas). "
+                                    f"Usando muestra aleatoria de {max_rows} filas."
+                                )
+                                cluster_data = df[cluster_vars].sample(max_rows).astype(np.float32)
+                            else:
+                                cluster_data = df[cluster_vars].astype(np.float32)
+                            
+                            g = sns.clustermap(
+                                cluster_data,
+                                cmap="vlag",
+                                figsize=(10, 8),
+                                dendrogram_ratio=(0.1, 0.1),
+                                cbar_pos=(0.02, 0.8, 0.05, 0.18)
+                            )
+                            st.pyplot(g.fig)
+
+                        except ValueError as ve:
+                            if "The number of observations cannot be determined on an empty distance matrix" in str(ve):
+                                st.error("❌ Error en clustering: Selecciona por lo menos dos variables")
+                            else:
+                                raise ve
+            
+                        except Exception as e:
+                            st.error(
+                                f"❌ Error en clustering: {str(e)}\n"
+                                "\n Intente reducir el número de variables o usar un subconjunto de datos."
+                            )
+
         # Exportar informe
         if 'mostrar_resumen' not in st.session_state:
             st.session_state.mostrar_resumen = False
 
-        texto_boton = "**Ocultar Resumen**" if st.session_state.mostrar_resumen else "**Resumen Dataset**"
-
-        if st.sidebar.button(texto_boton):
-            st.session_state.mostrar_resumen = not st.session_state.mostrar_resumen
-
-        if st.session_state.mostrar_resumen:
-            st.sidebar.write(f"Dataset: **{uploaded_file.name}**")
-            st.sidebar.write(f"Número de filas: **{len(df)}**")
-            st.sidebar.write(f"Número de columnas: **{len(df.columns)}**")
-        """
-
         # Resumen mejorado en sidebar
         with st.sidebar:
-            st.subheader("📋 Resumen Dataset")
-            st.metric("Filas", f"{len(df):,}")
-            st.metric("Columnas", len(df.columns))
-            st.metric("Memoria", f"{df.memory_usage().sum() / 1e6:.2f} MB")
-    
-            with st.expander("Variables"):
+            st.subheader("📋 Dataset")
+            with st.expander("🔍 Resumen"):
+                st.metric("Filas", f"{len(df):,}")
+                st.metric("Columnas", len(df.columns))
+                st.metric("Memoria", f"{df.memory_usage().sum() / 1e6:.2f} MB")
+
+            with st.expander("🔢 Variables"):
                 for col in df.columns:
                     st.text(f"• {col} ({df[col].dtype})")
 
@@ -270,5 +399,5 @@ else:
     """)
 
     # Botón para salir del README
-    st.button("🔄 Salir", on_click=lambda: setattr(st.session_state, 'show_readme', False),
-              help="Inicia tu análisis exploratorio")
+    st.button("⬅️ Regresar", on_click=lambda: setattr(st.session_state, 'show_readme', False),
+              help="Inicia análisis exploratorio")
