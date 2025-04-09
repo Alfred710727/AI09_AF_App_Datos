@@ -37,6 +37,35 @@ st.markdown(
     .css-1d391kg {
         padding-top: 1rem;
     }
+    /* Tooltip styles */
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        cursor: help;
+        margin-left: 8px;
+        font-weight: bold;
+    }
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 300px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 150%; /* Posición sobre el texto */
+        left: 50%;
+        margin-left: -150px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.4em;
+    }
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 0.9;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -137,18 +166,56 @@ if not st.session_state.show_readme:
         # Sección de Visualización
         st.sidebar.header("📈 Visualización Interactiva")
 
+        # Checkbox para habilitar gráficos avanzados
+        enable_advanced = st.sidebar.checkbox("🔬 Habilitar Gráficos Avanzados")
+
         # Filtrar opciones de gráfico según estado de EDA
-        available_plots = ["📊 Histograma", "🔗 Scatter Plot", "📦 Box Plot", "📊 Bar Plot", "📊 + 📊 Pairplot",
-                           "📈 KDE", "🎻 Violin Plot", "⬢ Hexbin",
-                           "3D 🚀 Scatter", "🔄 ParallelGroups", "🧬 ClusterMap"]
+        traditional_plots = ["📊 Histograma", "🔗 Scatter Plot", "📦 Box Plot", "📊 Bar Plot", "📊 + 📊 Pairplot"]
+
         if not show_eda:
-            available_plots.append("🌡️ Heatmap")
+            traditional_plots.append("🌡️ Heatmap")
 
-        plot_type = st.sidebar.selectbox("Tipo de Gráfico", available_plots)
+        advanced_plots = ["📈 KDE", "🎻 Violin Plot", "⬢ Hexbin", "3D 🚀 Scatter", "🔄 ParallelGroups", "🧬 ClusterMap"]
 
-        
+        if enable_advanced:
+            advanced_plot = st.sidebar.selectbox(
+                "🔬 Gráficos Avanzados",
+                advanced_plots,
+                key="advanced"
+            )
+            plot_type = advanced_plot  # Tomar el valor del selectbox activo
+        else:
+            traditional_plot = st.sidebar.selectbox(
+                "📊 Gráficos Tradicionales",
+                traditional_plots,
+                key="traditional"
+            )
+            plot_type = traditional_plot  # Tomar el valor del selectbox activo
+
+        # Diccionario con descripciones de gráficos
+        PLOT_DESCRIPTIONS = {
+            "📊 Histograma": "Muestra la distribución de una variable numérica mediante barras que representan la frecuencia de los datos en intervalos.",
+            "🔗 Scatter Plot": "Visualiza la relación entre dos variables numéricas mediante puntos en un plano cartesiano.",
+            "📦 Box Plot": "Muestra la distribución estadística de una variable (mediana, cuartiles y valores atípicos).",
+            "📊 Bar Plot": "Compara valores entre categorías mediante barras rectangulares.",
+            "📈 KDE": "Estima la densidad de probabilidad de una variable numérica mediante un suavizado de kernel.",
+            # ... (agregar descripciones para todos los gráficos)
+        }
+
         if plot_type:
-            st.header(f"{plot_type} Interactivo")
+            #st.header(f"{plot_type} Interactivo")
+            # Título con tooltip
+            st.markdown(f"""
+                <h2 style='display: inline-block;'>
+                    {plot_type} Interactivo
+                    <span class='tooltip'>
+                        ❓
+                        <span class='tooltiptext'>
+                            {PLOT_DESCRIPTIONS.get(plot_type, 'Sin descripción disponible')}
+                        </span>
+                    </span>
+                </h2>
+            """, unsafe_allow_html=True)
 
             # Selección de variables
             if plot_type in ["📊 Histograma", "📦 Box Plot"]:
