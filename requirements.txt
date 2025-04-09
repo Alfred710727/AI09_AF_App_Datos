@@ -2,6 +2,7 @@ streamlit
 plotly
 matplotlib
 seaborn
-scipy
-statsmodels
-kaleido
+pandas
+numpy
+openpyxl
+xlrd
