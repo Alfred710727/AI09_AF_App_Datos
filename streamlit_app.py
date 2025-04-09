@@ -74,16 +74,37 @@ st.markdown(
 # Carga de datos
 @st.cache_data(show_spinner="Cargando datos... 🔄")
 def load_data(file):
-    if file.name.endswith('.csv'):
-        return pd.read_csv(file)
-    elif file.name.endswith(('.xls', '.xlsx')):
-        return pd.read_excel(file)
-    elif file.name.endswith('.json'):
-        return pd.read_json(file)
-    else:
-        st.error("Formato no soportado ❌")
+    try:
+        filename = file.name.lower()
+        if filename.endswith('.csv'):
+            df = pd.read_csv(file)
+        elif filename.endswith('.xls'):
+            df = pd.read_excel(file, engine='xlrd')
+        elif filename.endswith('.xlsx'):
+            df = pd.read_excel(file, engine='openpyxl')
+        elif filename.endswith('.json'):
+            try:
+                df = pd.read_json(file, lines=True)
+            except:
+                file.seek(0)
+                df = pd.read_json(file)
+        else:
+            st.error("Formato no soportado ❌")
+            return None
+        
+        # Verificar DataFrame vacío
+        if df.empty:
+            st.error("Dataset vacío ❌")
+            return None
+        
+        return df
+    except pd.errors.EmptyDataError:
+        st.error("Dataset vacío ❌")
         return None
-
+    except Exception as e:
+        st.error(f"Error al cargar el archivo: {str(e)}")
+        return None
+   
 # Estado para controlar la vista README
 if 'show_readme' not in st.session_state:
     st.session_state.show_readme = False
