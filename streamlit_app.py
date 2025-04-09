@@ -92,18 +92,14 @@ def load_data(file):
             st.error("Formato no soportado ❌")
             return None
         
-        # Verificar DataFrame vacío
-        if df.empty:
-            st.error("Dataset vacío ❌")
-            return None
-        
         return df
+
     except pd.errors.EmptyDataError:
-        st.error("Dataset vacío ❌")
-        return None
+        st.error("El archivo está vacío ❌")
+        st.stop()
     except Exception as e:
         st.error(f"Error al cargar el archivo: {str(e)}")
-        return None
+        st.stop()
    
 # Estado para controlar la vista README
 if 'show_readme' not in st.session_state:
